@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Сравнение текстов</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2rem;
+      background: #f0f4f8;
+      color: #222;
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 700;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      margin-top: 0.3rem;
+      font-size: 1rem;
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      resize: vertical;
+    }
+
+    button {
+      margin-top: 1rem;
+      padding: 12px 25px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    .btn-back {
+      background-color: #555;
+      margin-left: 10px;
+    }
+
+    .btn-back:hover {
+      background-color: #333;
+    }
+
+    #result {
+      margin-top: 1.5rem;
+      padding: 1rem 1.2rem;
+      border-radius: 8px;
+      background-color: #fff;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+      color: #444;
+      max-width: 600px;
+    }
+
+    #charts {
+      margin-top: 2rem;
+      display: flex;
+      gap: 2rem;
+      max-width: 850px;
+      flex-wrap: wrap;
+      justify-content: start;
+    }
+
+    canvas {
+      background: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      flex: none; /* отключаем растяжение */
+      width: 400px !important;  /* фикс ширина */
+      height: 300px !important; /* фикс высота */
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      #charts {
+        flex-direction: column;
+      }
+
+      canvas {
+        width: 100% !important;
+        height: 300px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Сравнение текстов с графиками</h1>
+
+<form id="compareForm">
+  <label for="text1">Текст 1:</label>
+  <textarea id="text1" name="text1" required placeholder="Вставь первый текст для сравнения..."></textarea>
+
+  <label for="text2">Текст 2:</label>
+  <textarea id="text2" name="text2" required placeholder="Вставь второй текст для сравнения..."></textarea>
+
+  <input type="hidden" id="requestId" name="requestId" />
+
+  <button type="submit">Сравнить</button>
+  <button type="button" class="btn-back" onclick="window.location.href='index.html'">Назад</button>
+</form>
+
+<div id="result"></div>
+
+<div id="charts" style="display:none;">
+  <canvas id="levenshteinChart"></canvas>
+  <canvas id="jaccardChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  function generateRequestId() {
+    return 'req-' + Math.random().toString(36).substring(2, 10);
+  }
+
+  const form = document.getElementById('compareForm');
+  const resultDiv = document.getElementById('result');
+  const chartsDiv = document.getElementById('charts');
+  let levenshteinChart, jaccardChart;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const requestId = generateRequestId();
+    document.getElementById('requestId').value = requestId;
+
+    const payload = {
+      requestId: requestId,
+      text1: document.getElementById('text1').value,
+      text2: document.getElementById('text2').value
+    };
+
+    resultDiv.textContent = 'Загрузка... Подожди чуть-чуть 😎';
+    chartsDiv.style.display = 'none';
+
+    try {
+      const response = await fetch('/textOperations/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (!data.detailedReport) {
+        resultDiv.textContent = 'Не удалось получить отчёт :(';
+        return;
+      }
+
+      const lines = data.detailedReport.trim().split('\n');
+      let htmlReport = '<h2>Отчёт по сравнению текстов:</h2><ul>';
+      for (let line of lines) {
+        if (line.startsWith('- ')) {
+          const parts = line.substring(2).split(':');
+          if (parts.length > 1) {
+            htmlReport += `<li><strong>${parts[0]}:</strong> ${parts.slice(1).join(':').trim()}</li>`;
+          } else {
+            htmlReport += `<li>${line}</li>`;
+          }
+        } else {
+          htmlReport += `<p>${line}</p>`;
+        }
+      }
+      htmlReport += '</ul>';
+
+      htmlReport += `
+        <p><strong>Длина текста 1:</strong> ${data.text1Length} слов</p>
+        <p><strong>Длина текста 2:</strong> ${data.text2Length} слов</p>
+      `;
+
+      resultDiv.innerHTML = htmlReport;
+      chartsDiv.style.display = 'flex';
+
+      const levenshteinValue = data.levenshteinDistance;
+      const jaccardValue = data.jaccardSimilarity;
+
+      const commonOptions = {
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: true }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { font: { size: 16 } }
+          },
+          x: {
+            ticks: { font: { size: 16 } }
+          }
+        }
+      };
+
+      if (levenshteinChart) {
+        levenshteinChart.data.datasets[0].data = [levenshteinValue];
+        levenshteinChart.options.scales.y.suggestedMax = Math.max(30, levenshteinValue + 5);
+        levenshteinChart.update();
+      } else {
+        const ctxLev = document.getElementById('levenshteinChart').getContext('2d');
+        levenshteinChart = new Chart(ctxLev, {
+          type: 'bar',
+          data: {
+            labels: ['Левенштейн'],
+            datasets: [{
+              label: 'Расстояние (меньше — лучше)',
+              data: [levenshteinValue],
+              backgroundColor: '#e74c3c'
+            }]
+          },
+          options: {
+            ...commonOptions,
+            scales: {
+              y: {
+                beginAtZero: true,
+                suggestedMax: Math.max(30, levenshteinValue + 5),
+                ticks: { font: { size: 16 } }
+              },
+              x: {
+                ticks: { font: { size: 16 } }
+              }
+            }
+          }
+        });
+      }
+
+      if (jaccardChart) {
+        jaccardChart.data.datasets[0].data = [jaccardValue];
+        jaccardChart.update();
+      } else {
+        const ctxJac = document.getElementById('jaccardChart').getContext('2d');
+        jaccardChart = new Chart(ctxJac, {
+          type: 'bar',
+          data: {
+            labels: ['Жаккар'],
+            datasets: [{
+              label: 'Коэффициент (0-1, больше — лучше)',
+              data: [jaccardValue],
+              backgroundColor: '#27ae60'
+            }]
+          },
+          options: {
+            ...commonOptions,
+            scales: {
+              y: {
+                min: 0,
+                max: 1,
+                beginAtZero: true,
+                ticks: { font: { size: 16 } }
+              },
+              x: {
+                ticks: { font: { size: 16 } }
+              }
+            }
+          }
+        });
+      }
+
+    } catch (error) {
+      resultDiv.textContent = `Ошибка: ${error.message}`;
+      chartsDiv.style.display = 'none';
+      console.error(error);
+    }
+  });
+</script>
+
+</body>
+</html>

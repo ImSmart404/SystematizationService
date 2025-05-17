@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: TextSystematizator
+  data:
+    rest:
+      base-path: /textSystematizator
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mydatabase
+    username: myuser
+    password: secret
+    driver-class-name: org.postgresql.Driver

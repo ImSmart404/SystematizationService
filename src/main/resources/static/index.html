@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Система анализа текста</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background: #f5f7fa;
+      color: #2c3e50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      padding: 1rem 2rem;
+      background: #2c3e50;
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0.5rem 0;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      padding: 2rem;
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease;
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card h2 {
+      margin-top: 1rem;
+      font-size: 1.3rem;
+    }
+
+    .icon {
+      font-size: 3rem;
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 1rem;
+      font-size: 0.9rem;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Система анализа текста</h1>
+  <p>Очистка, сравнение и структурирование текстов</p>
+</header>
+
+<div class="dashboard">
+  <a href="extractAndClean.html" class="card">
+    <div class="icon">🧹</div>
+    <h2>Очистка текста</h2>
+    <p>Собери текст с веб-страницы и убери лишнее</p>
+  </a>
+  <a href="systematize.html" class="card">
+    <div class="icon">📂</div>
+    <h2>Систематизация</h2>
+    <p>Проанализируй структуру и логичность текста</p>
+  </a>
+  <a href="compare.html" class="card">
+    <div class="icon">⚖️</div>
+    <h2>Сравнение</h2>
+    <p>Сравни два текста по метрикам</p>
+  </a>
+</div>
+
+<footer>
+  Text Analysis System v1.0 — Михайлов Михаил Романович © 2025
+</footer>
+
+</body>
+</html>

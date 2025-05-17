@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+       http://www.liquibase.org/xml/ns/dbchangelog
+       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <!-- text_metrics: метрики для каждого очищенного текста -->
+    <changeSet id="3" author="mikhaylov">
+        <createTable tableName="text_metrics">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="clean_text_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_metric_clean" references="clean_texts(id)"/>
+            </column>
+            <column name="metric_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metric_value" type="DOUBLE PRECISION">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Очистка текста с URL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
+
+<header class="bg-gray-800 text-white px-6 py-4 flex justify-between items-center shadow">
+    <h1 class="text-xl font-semibold">Система анализа текста</h1>
+    <nav class="space-x-4">
+        <a href="index.html" class="hover:underline">Главная</a>
+        <a href="systematize.html" class="hover:underline">Систематизация</a>
+        <a href="compare.html" class="hover:underline">Сравнение</a>
+    </nav>
+</header>
+
+<main class="flex-grow flex justify-center items-start p-6">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl p-8">
+        <h2 class="text-2xl font-semibold mb-6">Очистка текста с URL</h2>
+
+        <div class="mb-4">
+            <label for="urlInput"></label><input type="text" id="urlInput" placeholder="Введите URL"
+                                                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none" />
+        </div>
+
+        <label class="inline-flex items-center space-x-2 mb-4">
+            <input type="checkbox" id="saveCheckbox" class="form-checkbox h-4 w-4 text-blue-600" />
+            <span>Сохранить в историю</span>
+        </label>
+
+        <div>
+            <button onclick="submitUrl()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200">
+                Отправить
+            </button>
+        </div>
+
+        <div class="mt-6">
+            <h3 class="text-lg font-medium mb-2">Результат:</h3>
+            <div id="result" class="bg-gray-100 border border-gray-300 rounded-md p-4 h-64 overflow-y-auto whitespace-pre-wrap"></div>
+            <div id="error" class="text-red-600 mt-2 font-medium"></div>
+        </div>
+
+        <div class="mt-6">
+            <a href="index.html"
+               class="inline-block text-gray-700 hover:text-gray-900 hover:underline font-semibold transition">
+                ← Назад на главную
+            </a>
+        </div>
+    </div>
+</main>
+
+<footer class="text-center text-sm text-gray-500 py-4">
+    Text Analysis System v1.0 — Босс © 2025
+</footer>
+
+<script>
+    function generateUUID() {
+        return crypto.randomUUID();
+    }
+
+    async function submitUrl() {
+        const url = document.getElementById('urlInput').value.trim();
+        const save = document.getElementById('saveCheckbox').checked;
+        const resultBox = document.getElementById('result');
+        const errorBox = document.getElementById('error');
+
+        resultBox.textContent = '';
+        errorBox.textContent = '';
+
+        if (!url) {
+            errorBox.textContent = 'Введите корректный URL';
+            return;
+        }
+
+        const rqId = generateUUID();
+
+        try {
+            const response = await fetch('/textOperations/extractAndClean', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    url: url,
+                    saveHistory: save,
+                    requestId: rqId
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                resultBox.textContent = data.cleanedText || 'Текст успешно очищен, но пуст.';
+            } else {
+                errorBox.textContent = `Ошибка: ${data.message || JSON.stringify(data)}`;
+            }
+        } catch (e) {
+            errorBox.textContent = `Ошибка запроса: ${e.message}`;
+        }
+    }
+</script>
+
+</body>
+</html>
